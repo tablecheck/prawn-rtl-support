@@ -8,15 +8,24 @@ module Prawn
     module Connector
       extend self
 
-      # Unicode ranges for common RTL scripts:
-      # Arabic (0600-06FF), Hebrew (0590-05FF), Syriac (0700-074F),
-      # Arabic Supplement (0750-077F), Thaana (0780-07BF),
-      # NKo (07C0-07FF), Samaritan (0800-083F), Mandaic (0840-085F),
-      # other extended RTL characters, and Bidi control characters.
-      RTL_REGEX = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF\u200F\u202A-\u202E\u2066-\u2069]/
+      # RTL letter scripts only — Hebrew, Arabic, Syriac, Arabic Supplement,
+      # Thaana, NKo, Samaritan, Mandaic, Hebrew/Arabic Presentation Forms.
+      # Deliberately EXCLUDES U+FEFF (BOM) and all BiDi formatting controls
+      # so stray pasted controls in otherwise-LTR text do not incorrectly
+      # trigger the reorder path.
+      RTL_LETTERS_REGEX = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFE]/
+
+      # BiDi formatting controls — not used for RTL detection (controls alone
+      # should not force the reorder path), but exposed for external callers.
+      RTL_FORMAT_CONTROLS_REGEX = /[\uFEFF\u200F\u202A-\u202E\u2066-\u2069]/
+
+      # Back-compat alias: previously the union of letter scripts and formatting
+      # controls. No internal consumer references this constant directly;
+      # retained for any external caller that may reference it.
+      RTL_REGEX = Regexp.union(RTL_LETTERS_REGEX, RTL_FORMAT_CONTROLS_REGEX)
 
       def include_rtl?(string)
-        string&.match?(RTL_REGEX)
+        string&.match?(RTL_LETTERS_REGEX)
       end
 
       def include_arabic?(string)
