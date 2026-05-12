@@ -1,4 +1,5 @@
 require "bundler/setup"
+require "prawn"
 require "prawn/rtl/support"
 
 RSpec.configure do |config|
